@@ -12,12 +12,24 @@ function NIHDatabaseContainer() {
     isLoading: false,
   });
   const [productList, setProductList] = useState([]);
+  const [coaData, setCoaData] = useState(null);
 
   const handleProductSearchChange = (key, value) => {
     setSearchProductParams((pre) => ({ ...pre, [key]: value }));
   };
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    let formData = new FormData();
+    formData.append("productCoaFile", coa);
+    formData.append("type", "quickstart");
+    const documentInfo = await axios.post(
+      `http://localhost:7777/api/document-ai/readDocument`,
+      formData
+    );
+    console.log(documentInfo);
+    if (documentInfo?.data?.status === "1" && documentInfo?.data?.data) {
+      setCoaData(documentInfo?.data?.data);
+    }
   };
   const handleSearchIngredients = async (e) => {
     e.preventDefault();
@@ -51,9 +63,10 @@ function NIHDatabaseContainer() {
             <input
               id="coa-input-file"
               type={"file"}
-              onChange={(e) =>
-                e.target?.files?.length && setCoa(e.target.files[0])
-              }
+              onChange={(e) => {
+                e.target?.files?.length && setCoa(e.target.files[0]);
+                setCoaData(null);
+              }}
               onClick={(e) => (e.target.value = null)}
               required
             />
@@ -62,6 +75,11 @@ function NIHDatabaseContainer() {
             <button type="submit">Submit</button>
           </div>
         </form>
+        {coaData && (
+          <div className="coa-info-container">
+            <p>{JSON.stringify(coaData)}</p>
+          </div>
+        )}
         <h2 className="heading-h2">Find Ingredients from NIH Database</h2>
         <form onSubmit={handleSearchIngredients}>
           <div className="form-div">
