@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./index.sass";
 
@@ -12,7 +12,58 @@ function NIHDatabaseContainer() {
     isLoading: false,
   });
   const [productList, setProductList] = useState([]);
-  const [coaData, setCoaData] = useState(null);
+  const [integrantTypeList, setIntegrantTypeList] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState("");
+  const [selectedProductBatch, setSelectedProductBatch] = useState("");
+  const [batchInfo, setBatchInfo] = useState(null);
+  const [selectedCoa, setSelectedCoa] = useState("");
+  const [documentAiResult, setDocumentAiResult] = useState(null);
+  const [searchTextDocAiResult, setSearchTextDocAiResult] = useState(null);
+  const [searchText, setSearchText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSearchText = (e) => {
+    e.preventDefault();
+    setSearchTextDocAiResult({
+      ...documentAiResult,
+      pages: documentAiResult?.pages?.map((page) => ({
+        ...page,
+        paragraphs: page?.paragraphs?.map((para) =>
+          para.replace(
+            new RegExp(searchText, "gi"),
+            `<span class="highlight-text">${searchText}</span>`
+          )
+        ),
+      })),
+    });
+  };
+
+  const getInitialData = async () => {
+    const integrantTypeRes = await axios.get(
+      `http://localhost:3005/client-app/getIntegrantTypeForDocAIDemo`
+    );
+    setIntegrantTypeList(
+      integrantTypeRes.data && integrantTypeRes.data?.length
+        ? integrantTypeRes.data
+        : []
+    );
+  };
+
+  const getProductBatchInfo = async (id, integrantTypeId) => {
+    const product = integrantTypeList?.filter(
+      (item) => item?.id === integrantTypeId
+    )[0];
+    const batch = product?.integrantsType?.filter((item) => item?.id === id)[0];
+
+    const response = await axios.post(
+      `http://localhost:3005/client-app/integrant-detail`,
+      {
+        short_code: product?.organization?.short_code,
+        external_id_slug: batch?.external_id_slug,
+      }
+    );
+    setBatchInfo(response?.data ? response?.data : null);
+  };
 
   const handleProductSearchChange = (key, value) => {
     setSearchProductParams((pre) => ({ ...pre, [key]: value }));
@@ -20,16 +71,26 @@ function NIHDatabaseContainer() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     let formData = new FormData();
-    formData.append("productCoaFile", coa);
-    formData.append("type", "quickstart");
+    if (coa) {
+      formData.append("productCoaFile", coa);
+    } else {
+      const coaData = batchInfo?.exhibitsInfo
+        ?.map((item) => item?.exhibitsType)
+        ?.flatMap((item) => item)
+        ?.filter((item) => item?.id === selectedCoa)[0];
+      formData.append("url", coaData?.url);
+    }
+    formData.append("type", "processDocumentWithOCR");
+    setIsLoading((pre) => true);
     const documentInfo = await axios.post(
       `http://localhost:7777/api/document-ai/readDocument`,
       formData
     );
-    console.log(documentInfo);
-    if (documentInfo?.data?.status === "1" && documentInfo?.data?.data) {
-      setCoaData(documentInfo?.data?.data);
+    if (documentInfo.data?.data) {
+      setDocumentAiResult(documentInfo.data?.data);
+      setSearchTextDocAiResult(documentInfo.data?.data);
     }
+    setIsLoading((pre) => false);
   };
   const handleSearchIngredients = async (e) => {
     e.preventDefault();
@@ -47,7 +108,17 @@ function NIHDatabaseContainer() {
     }
     setSearchProductParams((pre) => ({ ...pre, isLoading: false }));
   };
-  // https://us-documentai.googleapis.com/v1/projects/224664002400/locations/us/processors/9391674c6c2bdc83/processorVersions/pretrained-ocr-v1.1-2022-09-12:process
+
+  useEffect(() => {
+    if (selectedProductBatch && selectedProduct) {
+      getProductBatchInfo(selectedProductBatch, selectedProduct);
+    }
+  }, [selectedProductBatch, selectedProduct]);
+
+  useEffect(() => {
+    getInitialData();
+  }, []);
+  console.log(searchTextDocAiResult && batchInfo, searchTextDocAiResult);
   return (
     <div className="app-container">
       <div className="app-center-container">
@@ -59,6 +130,80 @@ function NIHDatabaseContainer() {
         </h2>
         <form onSubmit={handleSubmit}>
           <div className="form-div">
+            <label htmlFor="product-list-select-box">Select Product</label>
+            <select
+              id="product-list-select-box"
+              required
+              value={selectedProduct}
+              onChange={(e) => {
+                setSelectedProduct(e.target.value);
+                setSelectedProductBatch("");
+                setSelectedCoa("");
+              }}
+            >
+              <option value={""} disabled>
+                Select Product
+              </option>
+              {integrantTypeList?.map((item, key) => {
+                return (
+                  <option value={item?.id} key={key}>
+                    {item?.title}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+          <div className="form-div">
+            <label htmlFor="product-batch-list-select-box">
+              Select Product Batch
+            </label>
+            <select
+              id="product-batch-list-select-box"
+              required
+              value={selectedProductBatch}
+              onChange={(e) => {
+                setSelectedProductBatch(e.target.value);
+                setSelectedCoa("");
+              }}
+            >
+              <option value={""} disabled>
+                Select Product Batch
+              </option>
+              {integrantTypeList
+                ?.filter((product) => product?.id === selectedProduct)[0]
+                ?.integrantsType?.map((item, key) => {
+                  return (
+                    <option key={key} value={item?.id}>
+                      {item?.external_id}
+                    </option>
+                  );
+                })}
+            </select>
+          </div>
+          <div className="form-div">
+            <label htmlFor="product-coa-list-select-box">Select COA</label>
+            <select
+              id="product-coa-list-select-box"
+              required
+              value={selectedCoa}
+              onChange={(e) => setSelectedCoa(e.target.value)}
+            >
+              <option value={""} disabled>
+                Select COA
+              </option>
+              {batchInfo?.exhibitsInfo
+                ?.map((item) => item?.exhibitsType)
+                ?.flatMap((item) => item)
+                ?.map((item, key) => {
+                  return (
+                    <option key={key} value={item?.id}>
+                      {item?.title}
+                    </option>
+                  );
+                })}
+            </select>
+          </div>
+          {/* <div className="form-div">
             <label htmlFor="coa-input-file">Select COA</label>
             <input
               id="coa-input-file"
@@ -70,14 +215,85 @@ function NIHDatabaseContainer() {
               onClick={(e) => (e.target.value = null)}
               required
             />
-          </div>
+          </div> */}
           <div className="form-action-btns">
-            <button type="submit">Submit</button>
+            <button type="submit">{isLoading ? "Loading..." : "Submit"}</button>
           </div>
         </form>
-        {coaData && (
-          <div className="coa-info-container">
-            <p>{JSON.stringify(coaData)}</p>
+        {batchInfo && searchTextDocAiResult && (
+          <div className="document-ai-overview">
+            <div className="docAi-container">
+              <h2 className="product-name">Product Info From Our Database</h2>
+              <div className="docAi-top-item">
+                <div className="product-img">
+                  <img
+                    src={batchInfo?.integrantInfo?.integrantsType?.image_url}
+                    alt=""
+                  />
+                </div>
+                <p className="key-value-pairs">
+                  <span>Product Name: </span>
+                  {batchInfo?.integrantInfo?.title}
+                </p>
+                <p className="key-value-pairs">
+                  <span>Product Description: </span>
+                  {batchInfo?.integrantInfo?.description}
+                </p>
+                <h3 className="product-info-sub-heading">Ingredients</h3>
+                {batchInfo?.sourceLinks?.map((item, key) => {
+                  return (
+                    <React.Fragment key={key}>
+                      <div className="ingredient-li">
+                        <img src={item?.sourceInfo?.image} alt="" />
+                        <p>{item?.sourceInfo?.title}</p>
+                      </div>
+                      {item?.nodes?.map((node, subKey) => {
+                        return (
+                          <div
+                            className="ingredient-li nested-ingredient-li"
+                            key={subKey}
+                          >
+                            <img src={node?.sourceInfo?.image} alt="" />
+                            <p>{node?.sourceInfo?.title}</p>
+                          </div>
+                        );
+                      })}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+              <br />
+              <h2 className="product-name">Text From Document AI</h2>
+              <form onSubmit={handleSearchText}>
+                <div className="search-div">
+                  <input
+                    placeholder="Search Ingredients"
+                    type="text"
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                  />
+                  <button type="submit">Submit</button>
+                </div>
+              </form>
+              <div className="docAi-bottom-item">
+                {searchTextDocAiResult?.pages?.map((page, key) => {
+                  return (
+                    <div key={key}>
+                      <p>Page No: {page?.pageNumber}</p>
+                      {page?.paragraphs?.map((para, subKey) => {
+                        return (
+                          <div
+                            dangerouslySetInnerHTML={{ __html: para }}
+                            key={subKey}
+                            className="document-ai-para"
+                          />
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
         <h2 className="heading-h2">Find Ingredients from NIH Database</h2>
