@@ -40,7 +40,7 @@ function NIHDatabaseContainer() {
 
   const getInitialData = async () => {
     const integrantTypeRes = await axios.get(
-      `http://localhost:3005/client-app/getIntegrantTypeForDocAIDemo`
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/client-app/getIntegrantTypeForDocAIDemo`
     );
     setIntegrantTypeList(
       integrantTypeRes.data && integrantTypeRes.data?.length
@@ -56,7 +56,7 @@ function NIHDatabaseContainer() {
     const batch = product?.integrantsType?.filter((item) => item?.id === id)[0];
 
     const response = await axios.post(
-      `http://localhost:3005/client-app/integrant-detail`,
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/client-app/integrant-detail`,
       {
         short_code: product?.organization?.short_code,
         external_id_slug: batch?.external_id_slug,
@@ -83,7 +83,7 @@ function NIHDatabaseContainer() {
     formData.append("type", "processDocumentWithOCR");
     setIsLoading((pre) => true);
     const documentInfo = await axios.post(
-      `http://localhost:7777/api/document-ai/readDocument`,
+      `${process.env.REACT_APP_API_BASE_URL}/api/document-ai/readDocument`,
       formData
     );
     if (documentInfo.data?.data) {
@@ -118,7 +118,6 @@ function NIHDatabaseContainer() {
   useEffect(() => {
     getInitialData();
   }, []);
-  console.log(searchTextDocAiResult && batchInfo, searchTextDocAiResult);
   return (
     <div className="app-container">
       <div className="app-center-container">
