@@ -39,6 +39,9 @@ export const ProductDetailComparision = ({
         batchInfo?.integrantInfo?.title,
       ];
     }
+    ingredientNameList = ingredientNameList
+      ?.map((str) => str?.split(" "))
+      ?.flatMap((item) => item);
     setCoaText({
       ...documentAiCoaResult?.data,
       pages: documentAiCoaResult?.data?.pages?.map((page) => ({
