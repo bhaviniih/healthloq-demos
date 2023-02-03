@@ -40,8 +40,13 @@ export const ProductDetailComparision = ({
       ];
     }
     ingredientNameList = ingredientNameList
-      ?.map((str) => str?.split(" "))
+      ?.map((str) =>
+        str
+          ?.split(" ")
+          ?.map((s) => s?.replace(/[@!&\/\\#,+()$~%.'"`_:*?<>{}-]/g, ""))
+      )
       ?.flatMap((item) => item);
+    console.log("ingredientNameList", ingredientNameList);
     setCoaText({
       ...documentAiCoaResult?.data,
       pages: documentAiCoaResult?.data?.pages?.map((page) => ({
