@@ -11,7 +11,6 @@ export const ProductDetailComparision = ({
   const [coaText, setCoaText] = useState(null);
   const [searchIngredientsType, setSearchIngredientsType] = useState(["NIH"]);
   const handleSearch = (type) => {
-    console.log("type ", type);
     setSearchIngredientsType(type);
     let ingredientNameList = [nihLabelInfo?.fullName];
     if (searchIngredientsType === "NIH") {
@@ -47,10 +46,12 @@ export const ProductDetailComparision = ({
         paragraphs: page?.paragraphs?.map((para) =>
           ingredientNameList?.reduce(
             (str, searchText) =>
-              str.replace(
-                new RegExp(searchText, "gi"),
-                `<span class="highlight-text">${searchText}</span>`
-              ),
+              str
+                ?.toLowerCase()
+                .replace(
+                  new RegExp(searchText?.toLowerCase(), "gi"),
+                  `<span class="highlight-text">${searchText?.toLowerCase()}</span>`
+                ),
             para
           )
         ),
@@ -65,7 +66,12 @@ export const ProductDetailComparision = ({
     ) {
       handleSearch("NIH");
     }
-  }, [documentAiCoaResult, activeNIHProductId]);
+  }, [documentAiCoaResult]);
+  useEffect(() => {
+    if (activeNIHProductId) {
+      handleSearch("NIH");
+    }
+  }, [activeNIHProductId, documentAiCoaResult, nihLabelInfo]);
   if (!batchInfo?.integrantInfo?.title && !nihLabelInfo?.fullName) {
     return null;
   }
