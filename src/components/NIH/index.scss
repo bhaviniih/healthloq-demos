@@ -1,0 +1,148 @@
+@import "../../styles/variables.scss";
+
+.healthloq-coa-form-section,
+.healthloq-nih-form-section {
+    & > h3 {
+        margin-bottom: 20px;
+        color: $primaryColor;
+    }
+}
+
+.nih-product-list {
+    width: 100%;
+    margin-top: 30px;
+    & > h3 {
+        margin-bottom: 20px;
+        color: $primaryColor;
+    }
+    & > div {
+        display: flex;
+        flex-direction: column;
+        max-height: 500px;
+        overflow: auto;
+    }
+}
+
+.nih-product-li {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    border: 2px solid $borderColor;
+    border-radius: 10px;
+    padding: 10px;
+    cursor: pointer;
+    &:not(:last-child) {
+        margin-bottom: 20px;
+    }
+    & > div {
+        &:nth-child(1) {
+            & > h4 {
+                margin-bottom: 20px;
+            }
+            & > p {
+                &:not(:last-child) {
+                    margin-bottom: 10px;
+                }
+                & > span {
+                    font-weight: bold;
+                    margin-right: 5px;
+                }
+            }
+        }
+        &:nth-child(2) {
+            max-height: 200px;
+            height: 100%;
+            width: auto;
+        }
+    }
+    &.active {
+        background-color: $secondaryColor;
+        border: 2px solid $primaryColor;
+    }
+}
+
+.product-comparision-section {
+    width: 100%;
+    margin-top: 30px;
+    & > h3 {
+        margin-bottom: 20px;
+        color: $primaryColor;
+    }
+    & > div {
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
+}
+.product-info-box {
+    width: 50%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    &:first-child {
+        border-right: 1px solid $borderColor;
+    }
+    & > div:nth-child(2) {
+        height: 100%;
+        margin-bottom: 10px;
+        & > img {
+            height: 100%;
+            max-height: 200px;
+        }
+    }
+    & > p {
+        &:not(:last-child) {
+            margin-bottom: 10px;
+        }
+        & > span {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+    }
+    & > h4 {
+        margin: 20px 0;
+    }
+    .ingredient-li {
+        display: flex;
+        padding: 5px 0px;
+        align-items: center;
+        justify-content: flex-start;
+        & > img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+    }
+    .nested-ingredient-li {
+        margin-left: 50px;
+    }
+    & > button {
+        margin-top: 20px;
+    }
+}
+
+.coa-text-result {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    & > h3 {
+        margin-bottom: 20px;
+        color: $primaryColor;
+    }
+    .coa-page {
+        & > p {
+            margin-bottom: 10px;
+            & > span {
+                font-weight: bold;
+                margin-right: 5px;
+            }
+        }
+    }
+}
+
+.document-ai-para .highlight-text {
+    background-color: $highLightColor;
+}

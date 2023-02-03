@@ -5,10 +5,7 @@ import NIHDatabaseContainer from "./containers/NIH_dietary_supplement_label_data
 export default function Main() {
   return (
     <Routes>
-      <Route
-        path="/nih-dietary-supplement-label-database"
-        element={<NIHDatabaseContainer />}
-      />
+      <Route path="/nih-label-comparison" element={<NIHDatabaseContainer />} />
       <Route path="*" element={<NIHDatabaseContainer />} />
     </Routes>
   );

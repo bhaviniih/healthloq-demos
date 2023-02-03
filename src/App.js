@@ -1,4 +1,5 @@
 import { BrowserRouter } from "react-router-dom";
+import "./styles/global.scss";
 import "./App.css";
 import Main from "./Main";
 
