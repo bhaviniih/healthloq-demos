@@ -39,13 +39,16 @@ export const ProductDetailComparision = ({
         batchInfo?.integrantInfo?.title,
       ];
     }
-    ingredientNameList = ingredientNameList
-      ?.map((str) =>
-        str
-          ?.split(" ")
-          ?.map((s) => s?.replace(/[@!&\/\\#,+()$~%.'"`_:*?<>{}-]/g, ""))
-      )
-      ?.flatMap((item) => item);
+    ingredientNameList = [
+      ...ingredientNameList,
+      ...ingredientNameList
+        ?.map((str) =>
+          str
+            ?.split(" ")
+            ?.map((s) => s?.replace(/[@!&\/\\#,+()$~%.'"`_:*?<>{}-]/g, ""))
+        )
+        ?.flatMap((item) => item),
+    ]?.filter((str, i, arr) => arr?.indexOf(str) === i);
     console.log("ingredientNameList", ingredientNameList);
     setCoaText({
       ...documentAiCoaResult?.data,
