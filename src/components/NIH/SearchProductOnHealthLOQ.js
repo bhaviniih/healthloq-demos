@@ -23,7 +23,7 @@ export const SearchProductOnHealthLOQ = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     let formData = new FormData();
-    formData.append("type", "processDocumentWithOCR");
+    formData.append("type", "processDocumentWithFormParser");
     const coaData = batchInfo?.exhibitsInfo
       ?.map((item) => item?.exhibitsType)
       ?.flatMap((item) => item)

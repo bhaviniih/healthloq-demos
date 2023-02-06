@@ -8,81 +8,137 @@ export const ProductDetailComparision = ({
   documentAiCoaResult,
   activeNIHProductId,
 }) => {
-  const [coaText, setCoaText] = useState(null);
-  const [searchIngredientsType, setSearchIngredientsType] = useState(["NIH"]);
-  const handleSearch = (type) => {
-    setSearchIngredientsType(type);
-    let ingredientNameList = [nihLabelInfo?.fullName];
-    if (searchIngredientsType === "NIH") {
-      if (nihLabelInfo?.ingredientRows?.length) {
-        ingredientNameList = [
-          ...ingredientNameList,
-          ...nihLabelInfo?.ingredientRows?.map((item) => item?.name),
-        ];
-      }
-      if (nihLabelInfo?.otheringredients?.ingredients?.length) {
-        ingredientNameList = [
-          ...ingredientNameList,
-          ...nihLabelInfo?.otheringredients?.ingredients?.map(
-            (item) => item?.name
-          ),
-        ];
-      }
-    } else {
-      ingredientNameList = [
-        ...batchInfo?.sourceLinks
+  // const [coaText, setCoaText] = useState(null);
+  // const [searchIngredientsType, setSearchIngredientsType] = useState(["NIH"]);
+  // const handleSearch = (type) => {
+  //   setSearchIngredientsType(type);
+  //   let ingredientNameList = [nihLabelInfo?.fullName];
+  //   if (searchIngredientsType === "NIH") {
+  //     if (nihLabelInfo?.ingredientRows?.length) {
+  //       ingredientNameList = [
+  //         ...ingredientNameList,
+  //         ...nihLabelInfo?.ingredientRows?.map((item) => item?.name),
+  //       ];
+  //     }
+  //     if (nihLabelInfo?.otheringredients?.ingredients?.length) {
+  //       ingredientNameList = [
+  //         ...ingredientNameList,
+  //         ...nihLabelInfo?.otheringredients?.ingredients?.map(
+  //           (item) => item?.name
+  //         ),
+  //       ];
+  //     }
+  //   } else {
+  //     ingredientNameList = [
+  //       ...batchInfo?.sourceLinks
+  //         ?.map((item) => [
+  //           item?.sourceInfo?.title,
+  //           ...item?.nodes?.map((node) => node?.sourceInfo?.title),
+  //         ])
+  //         ?.flatMap((item) => item),
+  //       batchInfo?.integrantInfo?.title,
+  //     ];
+  //   }
+  //   ingredientNameList = [
+  //     ...ingredientNameList,
+  //     ...ingredientNameList
+  //       ?.map((str) =>
+  //         str
+  //           ?.split(" ")
+  //           ?.map((s) => s?.replace(/[@!&\/\\#,+()$~%.'"`_:*?<>{}-]/g, ""))
+  //       )
+  //       ?.flatMap((item) => item),
+  //   ]?.filter((str, i, arr) => arr?.indexOf(str) === i);
+  //   console.log("ingredientNameList", ingredientNameList);
+  //   setCoaText({
+  //     ...documentAiCoaResult?.data,
+  //     pages: documentAiCoaResult?.data?.pages?.map((page) => ({
+  //       ...page,
+  //       paragraphs: page?.paragraphs?.map((para) =>
+  //         ingredientNameList?.reduce(
+  //           (str, searchText) =>
+  //             str
+  //               ?.toLowerCase()
+  //               .replace(
+  //                 new RegExp(searchText?.toLowerCase(), "gi"),
+  //                 `<span class="highlight-text">${searchText?.toLowerCase()}</span>`
+  //               ),
+  //           para
+  //         )
+  //       ),
+  //     })),
+  //   });
+  // };
+  // useEffect(() => {
+  //   if (
+  //     !documentAiCoaResult?.isLoading &&
+  //     documentAiCoaResult?.data &&
+  //     Object.keys(documentAiCoaResult?.data).length
+  //   ) {
+  //     handleSearch("NIH");
+  //   }
+  // }, [documentAiCoaResult]);
+  // useEffect(() => {
+  //   if (activeNIHProductId) {
+  //     handleSearch("NIH");
+  //   }
+  // }, [activeNIHProductId, documentAiCoaResult, nihLabelInfo]);
+
+  const [ingredients, setIngredients] = useState({
+    healthloq: [],
+    nih: [],
+    coa: [],
+  });
+
+  useEffect(() => {
+    if (batchInfo?.sourceLinks?.length) {
+      setIngredients((pre) => ({
+        ...pre,
+        healthloq: batchInfo?.sourceLinks
           ?.map((item) => [
             item?.sourceInfo?.title,
             ...item?.nodes?.map((node) => node?.sourceInfo?.title),
           ])
           ?.flatMap((item) => item),
-        batchInfo?.integrantInfo?.title,
+      }));
+    }
+  }, [batchInfo]);
+
+  useEffect(() => {
+    let arr = [];
+    if (nihLabelInfo?.ingredientRows?.length) {
+      arr = [
+        ...arr,
+        ...nihLabelInfo?.ingredientRows?.map((item) => item?.name),
       ];
     }
-    ingredientNameList = [
-      ...ingredientNameList,
-      ...ingredientNameList
-        ?.map((str) =>
-          str
-            ?.split(" ")
-            ?.map((s) => s?.replace(/[@!&\/\\#,+()$~%.'"`_:*?<>{}-]/g, ""))
-        )
-        ?.flatMap((item) => item),
-    ]?.filter((str, i, arr) => arr?.indexOf(str) === i);
-    console.log("ingredientNameList", ingredientNameList);
-    setCoaText({
-      ...documentAiCoaResult?.data,
-      pages: documentAiCoaResult?.data?.pages?.map((page) => ({
-        ...page,
-        paragraphs: page?.paragraphs?.map((para) =>
-          ingredientNameList?.reduce(
-            (str, searchText) =>
-              str
-                ?.toLowerCase()
-                .replace(
-                  new RegExp(searchText?.toLowerCase(), "gi"),
-                  `<span class="highlight-text">${searchText?.toLowerCase()}</span>`
-                ),
-            para
-          )
+    if (nihLabelInfo?.otheringredients?.ingredients?.length) {
+      arr = [
+        ...arr,
+        ...nihLabelInfo?.otheringredients?.ingredients?.map(
+          (item) => item?.name
         ),
-      })),
-    });
-  };
-  useEffect(() => {
-    if (
-      !documentAiCoaResult?.isLoading &&
-      documentAiCoaResult?.data &&
-      Object.keys(documentAiCoaResult?.data).length
-    ) {
-      handleSearch("NIH");
+      ];
     }
+    if (arr?.length) {
+      setIngredients((pre) => ({ ...pre, nih: arr }));
+    }
+  }, [nihLabelInfo, activeNIHProductId]);
+
+  useEffect(() => {
+    setIngredients((pre) => ({
+      ...pre,
+      coa: documentAiCoaResult?.data?.pages
+        ?.map((page) =>
+          page?.tables
+            ?.map((tabel) => tabel?.rows?.map((row) => row[0]))
+            ?.flatMap((item) => item)
+        )
+        ?.flatMap((item) => item)
+        ?.filter((item) => Boolean(item)),
+    }));
   }, [documentAiCoaResult]);
-  useEffect(() => {
-    if (activeNIHProductId) {
-      handleSearch("NIH");
-    }
-  }, [activeNIHProductId, documentAiCoaResult, nihLabelInfo]);
+
   if (!batchInfo?.integrantInfo?.title && !nihLabelInfo?.fullName) {
     return null;
   }
@@ -104,7 +160,7 @@ export const ProductDetailComparision = ({
                 <span>Brand:</span>
                 {batchInfo?.integrantInfo?.organizations?.name}
               </p>
-              <h4>Ingredients</h4>
+              {/* <h4>Ingredients</h4>
               {batchInfo?.sourceLinks?.map((item, key) => {
                 return (
                   <React.Fragment key={key}>
@@ -125,10 +181,10 @@ export const ProductDetailComparision = ({
                     })}
                   </React.Fragment>
                 );
-              })}
-              <button onClick={() => handleSearch("HealthLOQ")}>
+              })} */}
+              {/* <button onClick={() => handleSearch("HealthLOQ")}>
                 Search Ingredients In COA Text
-              </button>
+              </button> */}
             </>
           ) : null}
         </div>
@@ -146,7 +202,7 @@ export const ProductDetailComparision = ({
                 <span>Brand:</span>
                 {nihLabelInfo?.brandName}
               </p>
-              <h4>Ingredients</h4>
+              {/* <h4>Ingredients</h4>
               {nihLabelInfo?.ingredientRows?.map((item, key) => {
                 return (
                   <React.Fragment key={key}>
@@ -164,17 +220,18 @@ export const ProductDetailComparision = ({
                     </div>
                   </React.Fragment>
                 );
-              })}
-              <button onClick={() => handleSearch("NIH")}>
+              })} */}
+              {/* <button onClick={() => handleSearch("NIH")}>
                 Search Ingredients In COA Text
-              </button>
+              </button> */}
             </>
           ) : (
             <p>Please select NIH Label from above list.</p>
           )}
         </div>
       </div>
-      {coaText && (
+
+      {/* {coaText && (
         <div className="coa-text-result">
           <h3>COA Text</h3>
           <div>
@@ -199,7 +256,39 @@ export const ProductDetailComparision = ({
             })}
           </div>
         </div>
-      )}
+      )} */}
+
+      <div className="ingredient-comparision-table">
+        <h3>Ingredients Comparision</h3>
+        <table border={1}>
+          <thead>
+            <tr className="table-row">
+              <th>HealthLOQ Ingredients</th>
+              <th>COA Ingredients</th>
+              <th>NIH Ingredients</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              ...Array(
+                Math.max(
+                  ingredients.coa?.length || 0,
+                  ingredients.nih?.length || 0,
+                  ingredients.healthloq?.length || 0
+                )
+              ),
+            ]?.map((el, index) => {
+              return (
+                <tr className="table-row" key={index}>
+                  <td>{ingredients?.healthloq?.[index]}</td>
+                  <td>{ingredients?.coa?.[index]}</td>
+                  <td>{ingredients?.nih?.[index]}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
