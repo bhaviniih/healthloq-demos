@@ -89,6 +89,11 @@ export const ProductDetailComparision = ({
     nih: [],
     coa: [],
   });
+  const [otherDetails, setOtherDetails] = useState({
+    healthloq: [],
+    nih: [],
+    coa: [],
+  });
 
   useEffect(() => {
     if (batchInfo?.sourceLinks?.length) {
@@ -101,6 +106,18 @@ export const ProductDetailComparision = ({
           ])
           ?.flatMap((item) => item),
       }));
+      if (batchInfo?.integrantInfo?.facets) {
+        const facets = JSON.parse(batchInfo?.integrantInfo?.facets);
+        if (facets?.length) {
+          setOtherDetails((pre) => ({
+            ...pre,
+            healthloq: facets?.map((facet) => ({
+              key: facet?.title,
+              value: facet?.description,
+            })),
+          }));
+        }
+      }
     }
   }, [batchInfo]);
 
@@ -109,20 +126,159 @@ export const ProductDetailComparision = ({
     if (nihLabelInfo?.ingredientRows?.length) {
       arr = [
         ...arr,
-        ...nihLabelInfo?.ingredientRows?.map((item) => item?.name),
+        ...nihLabelInfo?.ingredientRows?.map(
+          (item) =>
+            `${item?.name} ${
+              item?.forms?.length
+                ? `(${item?.forms?.reduce(
+                    (str, form, i, arr) =>
+                      `${str}${form?.name}${i !== arr?.length - 1 ? ", " : ""}`,
+                    ""
+                  )})`
+                : ""
+            }`
+        ),
       ];
     }
     if (nihLabelInfo?.otheringredients?.ingredients?.length) {
       arr = [
         ...arr,
         ...nihLabelInfo?.otheringredients?.ingredients?.map(
-          (item) => item?.name
+          (item) =>
+            `${item?.name} ${
+              item?.forms?.length
+                ? `(${item?.forms?.reduce(
+                    (str, form, i, arr) =>
+                      `${str}${form?.name}${i !== arr?.length - 1 ? ", " : ""}`,
+                    ""
+                  )})`
+                : ""
+            }`
         ),
       ];
     }
     if (arr?.length) {
       setIngredients((pre) => ({ ...pre, nih: arr }));
     }
+    setOtherDetails((pre) => ({
+      ...pre,
+      nih: [
+        {
+          key: "General Information",
+          value: "",
+        },
+        {
+          key: "Product Name",
+          value: nihLabelInfo?.fullName,
+        },
+        {
+          key: "Brand",
+          value: nihLabelInfo?.brandName,
+        },
+        {
+          key: "Bar Code",
+          value: nihLabelInfo?.upcSku,
+        },
+        {
+          key: "Net Contents",
+          value: nihLabelInfo?.netContents?.reduce(
+            (str, item, i, arr) =>
+              `${str}${item?.display}${i !== arr?.length - 1 ? ", " : ""}`,
+            ""
+          ),
+        },
+        {
+          key: "Market Status",
+          value: nihLabelInfo?.offMarket ? "Off Market" : "On Market",
+        },
+        ...(nihLabelInfo?.events?.map((event) => ({
+          key: event?.type,
+          value: event?.date,
+        })) || []),
+        {
+          key: "DSLD ID",
+          value: nihLabelInfo?.id,
+        },
+        {},
+        {
+          key: "Product Classification",
+        },
+        {
+          key: "Product Type",
+          value: nihLabelInfo?.productType?.langualCodeDescription,
+        },
+        {
+          key: "Supplement Form",
+          value: nihLabelInfo?.physicalState?.langualCodeDescription,
+        },
+        {
+          key: "Dietary Claim(s) or Use(s)",
+          value: nihLabelInfo?.claims?.reduce(
+            (str, item, i, arr) =>
+              `${str}${item?.langualCodeDescription}${
+                i !== arr?.length - 1 ? ", " : ""
+              }`,
+            ""
+          ),
+        },
+        {
+          key: "Intended Target Group(s)",
+          value: nihLabelInfo?.targetGroups?.reduce(
+            (str, item, i, arr) =>
+              `${str}${item}${i !== arr?.length - 1 ? ", " : ""}`,
+            ""
+          ),
+        },
+        {},
+        {
+          key: "Supplement Facts",
+        },
+        {
+          key: "Daily Value (DV) Target Group(s)",
+          value: nihLabelInfo?.userGroups?.reduce(
+            (str, item, i, arr) =>
+              `${str}${item?.dailyValueTargetGroupName}${
+                i !== arr?.length - 1 ? ", " : ""
+              }`,
+            ""
+          ),
+        },
+        {
+          key: "Serving Size",
+          value: nihLabelInfo?.servingSizes?.reduce(
+            (str, item, i, arr) =>
+              `${str}${item?.order} ${item?.unit}${
+                i !== arr?.length - 1 ? ", " : ""
+              }`,
+            ""
+          ),
+        },
+        {
+          key: "Alternate Serving Size",
+          value: "-",
+        },
+        {
+          key: "Servings per Container",
+          value: nihLabelInfo?.servingsPerContainer,
+        },
+        {},
+        {
+          key: "Label Statements",
+        },
+        ...(nihLabelInfo?.statements?.map((statement) => ({
+          key: statement.type,
+          value: statement?.notes,
+        })) || []),
+        {},
+        {
+          key: "Manufacturer",
+        },
+        ...(nihLabelInfo?.contacts?.map((contact) => ({
+          key: contact?.text,
+          value: `${contact?.contactDetails?.name}, ${contact?.contactDetails?.streetAddress}, ${contact?.contactDetails?.city}, ${contact?.contactDetails?.state}, ${contact?.contactDetails?.zipCode}, ${contact?.contactDetails?.phoneNumber}, ${contact?.contactDetails?.email}`,
+        })) || []),
+      ],
+    }));
   }, [nihLabelInfo, activeNIHProductId]);
 
   useEffect(() => {
@@ -136,6 +292,12 @@ export const ProductDetailComparision = ({
         )
         ?.flatMap((item) => item)
         ?.filter((item) => Boolean(item)),
+    }));
+    setOtherDetails((pre) => ({
+      ...pre,
+      coa: documentAiCoaResult?.data?.pages
+        ?.map((page) => page?.formFields)
+        ?.flatMap((item) => item),
     }));
   }, [documentAiCoaResult]);
 
@@ -258,7 +420,7 @@ export const ProductDetailComparision = ({
         </div>
       )} */}
 
-      <div className="ingredient-comparision-table">
+      <div className="table-comparision">
         <h3>Ingredients Comparision</h3>
         <table border={1}>
           <thead>
@@ -283,6 +445,141 @@ export const ProductDetailComparision = ({
                   <td>{ingredients?.healthloq?.[index]}</td>
                   <td>{ingredients?.coa?.[index]}</td>
                   <td>{ingredients?.nih?.[index]}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="table-comparision">
+        <h3>COA Ingredients Detail Analysis</h3>
+        {documentAiCoaResult?.data?.pages?.map((page, key) => {
+          return page?.tables?.map((table, tableKey) => {
+            return (
+              <table border={1} key={tableKey}>
+                <thead>
+                  <tr className="table-row">
+                    {table?.columns?.map((column, columnKey) => {
+                      return <th key={columnKey}>{column}</th>;
+                    })}
+                  </tr>
+                </thead>
+                <tbody>
+                  {table?.rows?.map((row, rowKey) => {
+                    return (
+                      <tr className="table-row" key={rowKey}>
+                        {row?.map((str, strKey) => {
+                          return <td key={strKey}>{str}</td>;
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            );
+          });
+        })}
+      </div>
+
+      <div className="table-comparision">
+        <h3>NIH Ingredients Detail Analysis</h3>
+        <table border={1}>
+          <thead>
+            <tr className="table-row">
+              <th>Ingredient</th>
+              <th>Amount per Serving</th>
+            </tr>
+          </thead>
+          <tbody>
+            {nihLabelInfo?.ingredientRows?.map((item, key) => {
+              return (
+                <tr key={key}>
+                  <td>{`${item?.name} ${
+                    item?.forms?.length
+                      ? `(${item?.forms?.reduce(
+                          (str, form, i, arr) =>
+                            `${str}${form?.name}${
+                              i !== arr?.length - 1 ? ", " : ""
+                            }`,
+                          ""
+                        )})`
+                      : ""
+                  }`}</td>
+                  <td>{`${item?.quantity?.[0]?.quantity} ${item?.quantity?.[0]?.unit}`}</td>
+                </tr>
+              );
+            })}
+            {nihLabelInfo?.otheringredients?.ingredients?.map((item, key) => {
+              return (
+                <tr key={key}>
+                  <td>{`${item?.name} ${
+                    item?.forms?.length
+                      ? `(${item?.forms?.reduce(
+                          (str, form, i, arr) =>
+                            `${str}${form?.name}${
+                              i !== arr?.length - 1 ? ", " : ""
+                            }`,
+                          ""
+                        )})`
+                      : ""
+                  }`}</td>
+                  <td>
+                    {Boolean(item?.quantity?.length) &&
+                      `${item?.quantity?.[0]?.quantity} ${item?.quantity?.[0]?.unit}`}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="table-comparision">
+        <h3>Other Details</h3>
+        <table border={1}>
+          <thead>
+            <tr className="table-row">
+              <th>HealthLOQ Other Details</th>
+              <th>COA Other Details</th>
+              <th>NIH Other Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              ...Array(
+                Math.max(
+                  otherDetails.coa?.length || 0,
+                  otherDetails.nih?.length || 0,
+                  otherDetails.healthloq?.length || 0
+                )
+              ),
+            ]?.map((el, index) => {
+              return (
+                <tr className="table-row" key={index}>
+                  <td className="table-td">
+                    <span>
+                      {otherDetails?.healthloq?.[index]?.key?.toLowerCase()}
+                      {otherDetails?.healthloq?.[index] && ":"}
+                    </span>
+                    {otherDetails?.healthloq?.[index]?.value}
+                  </td>
+                  <td className="table-td">
+                    <span>
+                      {otherDetails?.coa?.[index]?.key?.toLowerCase()}
+                      {otherDetails?.coa?.[index] &&
+                        !otherDetails?.coa?.[index]?.key?.includes(":") &&
+                        ":"}
+                    </span>
+                    {otherDetails?.coa?.[index]?.value}
+                  </td>
+                  <td className="table-td">
+                    <span>
+                      {otherDetails?.nih?.[index]?.key?.toLowerCase()}
+                      {Boolean(otherDetails?.nih?.[index]?.value) && ":"}
+                    </span>
+                    {otherDetails?.nih?.[index]?.value}
+                  </td>
                 </tr>
               );
             })}
